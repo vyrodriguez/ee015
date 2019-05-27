@@ -1,0 +1,31 @@
+// Snippet para 6809
+//C:\Users\$(USERNAME)\AppData\Roaming\Code\User\snippets\asm.6x09.json
+
+// 	"body": [
+	// 		"console.log('$1');",
+	// 		"$2"
+	// 	],
+	// 	"description": "Log output to console"
+	// }
+
+		"Assembler 6809": {
+			"prefix": "asm",
+			"body": [
+			  ";----------------ETIQUETAS---------------",
+			  "RAM     EQU     \\$0080",
+			  "ROM     EQU     \\$EC00",
+			  "Reset   EQU     \\$FFFE",
+			  ";----------------VARIABLES---------------",
+			  "        ORG     RAM",
+			  "$1",
+			  ";-----------------PROCESO----------------",
+			  "        ORG     ROM",
+			  "inicio      $2",
+			  "$3",
+			  ";----------------Reset------------------",
+			  "        ORG     Reset",
+			  "        FDB     inicio"
+			],
+			"description": "For Loop"
+		}
+}
