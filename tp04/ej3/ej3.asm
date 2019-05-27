@@ -12,7 +12,7 @@ VAR3    RMB     1     ; VAR3 -> MSB
 inicio      CLR     VAR2
             CLR     VAR3
             LDA     VAR1    ;CARGA AL ACUMULADOR EL CONT. VAR1
-            LSLA            ;CORRIMIENTO A LA IZQUIERDA
+            LSLA           ;CORRIMIENTO A LA IZQUIERDA
             ROL     VAR3  ;EL C_OUT PASA AL 'LSB' Y LO QUE ESTABA EN 'MSB' PASA A C_IN
             LSLA
             ROL     VAR3

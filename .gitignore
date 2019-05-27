@@ -1,0 +1,6 @@
+*.ERR
+*.lst
+*.map
+*.s19
+*.hex
+.vscode/
