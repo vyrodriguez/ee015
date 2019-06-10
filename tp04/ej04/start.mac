@@ -1,0 +1,8 @@
+loadmap ej04
+clearvar
+var var1
+var var2
+var resu
+mm 0080 ff
+mm 0081 0f
+bell
