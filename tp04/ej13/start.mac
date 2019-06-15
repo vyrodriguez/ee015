@@ -1,0 +1,11 @@
+loadmap ej13
+clearvar
+var var1
+var var2
+var resu
+mm 0080 FF      ;VAR1
+mm 0081 FE      ;VAR1
+mm 0082 FD      ;VAR1
+mm 0083 FC      ;VAR2
+mm 0084 FB      ;VAR2
+mm 0085 FA      ;VAR2
