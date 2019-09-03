@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>fileTypes</key>
+	<array>
+		<string>asm</string>
+		<string>6809</string>
+		<string>6309</string>
+		<string>inc</string>
+		<string>s</string>
+	</array>
+	<key>name</key>
+	<string>6809 and 6309 Assembly</string>
+	<key>patterns</key>
+	<array>
+		<dict>
+			<key>match</key>
+			<string>;.*$</string>
+			<key>name</key>
+			<string>comment.line</string>
+		</dict>
+		<dict>
+			<key>begin</key>
+			<string>"</string>
+			<key>beginCaptures</key>
+			<dict>
+				<key>0</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.string.begin.asm.6x09</string>
+				</dict>
+			</dict>
+			<key>end</key>
+			<string>"</string>
+			<key>endCaptures</key>
+			<dict>
+				<key>0</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.string.end.asm.6x09</string>
+				</dict>
+			</dict>
+			<key>name</key>
+			<string>string.quoted.double.include.asm.6x09</string>
+		</dict>
+		<dict>
+			<key>match</key>			
+			<string>\b(ADC|ADD|AIS|AIX|AND|ASL|ASLA|ASLX|ASL|ASLA|ASLX|ASR|ASRA|ASRX|BCC|BCLR|BCS|BEQ|BGE|BGT|BHCC|BHCS|BHI|BHS|BIH|BIL|BIT|BLE|BLO|BLS|BLT|BMC|BMI|BMS|BNE|BPL|BRA|BRCLR|BRN|BRSET|BSET|BSR|CBEQ|CBEQA|CBEQX|CLC|CLI|CLR|CLRA|CLRX|CLRH|CMP|COM|COMA|COMX|CPHX|CPX|DAA|DBNZ|DEC|DECA|DECX|DIV|EOR|INC|INCA|INCX|JMP|JSR|LDA|LDHX|LDX|LSL|LSLA|LSLX|LSR|LSRA|LSRX|MOV|MUL|NEG|NEGA|NEGX|NOP|NSA|ORA|PSHA|PSHH|PSHX|PULA|PULH|PULX|ROL|ROLA|ROLX|ROR|RORA|RORX|RSP|RTI|RTS|SBC|SEC|SEI|STA|STHX|STOP|STX|SUB|SWI|TAP|TAX|TPA|TST|TSTA|TSTX|TSX|TXA|TXS)\b</string>
+			<key>name</key>
+			<string>keyword.mnemonic.asm.6809</string>
+		</dict>
+	</array>
+	<key>scopeName</key>
+	<string>source.asm.6x09</string>
+	<key>uuid</key>
+	<string>0eb541f1-c909-461f-9c14-51507b0af31c</string>
+</dict>
+</plist>

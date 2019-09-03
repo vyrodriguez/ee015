@@ -1,0 +1,24 @@
+{
+	// See https://go.microsoft.com/fwlink/?LinkId=733558
+	// for the documentation about the tasks.json format
+	"version": "2.0.0",
+	"options": {
+		"shell": {
+			"executable": "cmd.exe",
+			"args": [
+				"/d", "/c"
+			]
+		}
+	},
+	"tasks": [
+		{
+			"label": "simulate",
+			"type": "shell",
+			"command": "cd ${fileDirname} && casm08z.exe ${file} S L D C M I Q && ics08jlz.exe /S ${fileDirname}\\${fileBasenameNoExtension}",
+			"problemMatcher": [],
+			"presentation": {
+                "reveal": "never"
+            }
+		}
+	]
+}
