@@ -49,18 +49,26 @@ TMOD    EQU     $0023       ;MODULO ALTO DEL CONTADOR
 
 ;----------------VARIABLES---------------
         ORG     RAM
-BIN		RMB		1
-BCDH	RMB		1		   ;Parte alta del BCD
-BCDL	RMB		1		   ;Parte baja del BCD
-CENTENA	RMB		1		   
-DECENA	RMB		1
-UNIDAD	RMB		1
+BIN	RMB	1
+BCDH	RMB	1		   ;Parte alta del BCD
+BCDL	RMB	1		   ;Parte baja del BCD
+CENTENA	RMB	1		   
+DECENA	RMB	1
+UNIDAD	RMB	1
 CUENTA  RMB     2
 CONTEO  RMB     2
 ANT     RMB     1           ; DEFINE EL ESTADO ANTERIOR 
 DSEL    RMB     1           ;DISPLAY QUE COMIENZA PRENDIDO(PRENDETE UNO)
 CARRY   RMB     1
 TIEMPO  RMB     1
+VAL         DS 1   ;Se define la variable de 24bits (3bytes)
+VAL1	    DS 1
+VAL2	    DS 1
+RESULT      DS 1   ;Variables del resultado en BCD (Cada byte contiene 2 BCD)
+RESULT1	    DS 1
+RESULT2     DS 1
+RESULT3	    DS 1
+
 				 		  ;7 segmentos;abcdefgh  
 TABLA   FCB     $FC		   ;Número 0 %11111100
 		FCB		$60		   ;Número 1 %01100000
@@ -78,11 +86,11 @@ TABLA   FCB     $FC		   ;Número 0 %11111100
 inicio  RSP                 ;RESETEAR PUNTERO DE PILA
         BSET    0,CONF1     ;DESHABILITAR COP
         CLI                 ;HABILITA INTERRUPCIONES AL CPU(bit I=0 EN EL CCR)    
-        BSR     INIPUERTO   ;SUBRUTINA INICIALIZAR PUERTO
-        BSR     INITIMER    ;SUBRUTINA INICIALIZAR TIMER
+        BSR     INIP   ;SUBRUTINA INICIALIZAR PUERTO
+        BSR     INIT    ;SUBRUTINA INICIALIZAR TIMER
         CLR     ANT         
         CLR     CONTEO
-        CLR     CONTADOR
+        CLR     CUENTA
         CLR     BIN
         CLR     UNIDAD
         CLR     DECENA
@@ -112,40 +120,20 @@ SALTO2  LDA     PUERTA      ;CARGO ESTADO DE PUERTO A
         BNE     SALTO2
         BRA     LAZO
 
-;--------------------------------------------
-        ORG     inter
-        EOR    #%10000000
-        BSR     MULTIPLEX
-        INC     TIEMPO
-        CMP     #!200
-        BNE     SALTO3
-        CLR     TIEMPO
-        LDA     CONTEO+1
-        STA     CUENTA+1
-        CLR     CONTEO+1
-        LDA     CONTEO
-        STA     CUENTA
-        CLR     CONTEO
-        BSR     BIN2BCD
-        BSR     BCD27
-SALTO3  RTI
-;--------------------------------------------
-
-
 
 ;--------------------------------------------
-INIPUERTO	LDA     #$10 	;
-            STA     DDRA    ;
-            LDA     #$FF
-			STA     DDRB 
-            LDA     #$00
-            STA     PUERTA  ;INICIALIZAMOS EL PUERTO A EN CERO
-            STA     PUERTB  ;INICIALIZAMOS EL PUERTO B EN CERO
-			RTS	    			 ;
+INIP    LDA     #$10 	;
+        STA     DDRA    ;
+        LDA     #$FF
+        STA     DDRB 
+        LDA     #$00
+        STA     PUERTA  ;INICIALIZAMOS EL PUERTO A EN CERO
+        STA     PUERTB  ;INICIALIZAMOS EL PUERTO B EN CERO
+        RTS	    			 ;
 ;--------------------------------------------
-INITIMER    LDHX    #$1800  ;MODULO DEL CONTADOR
-            STHX    TMOD
-            LDA     #%01000001
+INIT    LDHX    #$1800  ;MODULO DEL CONTADOR
+        STHX    TMOD
+        LDA     #%01000001
 ;--------------------------------------------
 ;|TOF|TOIE|TSTOP|TRST|----|PS2|PS1|PS0|
 ;--------------------------------------------
@@ -155,13 +143,142 @@ INITIMER    LDHX    #$1800  ;MODULO DEL CONTADOR
 ;TRST=1 RESET DEL MODULO 
 ;PS[2:0] CONFIGURA EL PRESCALER 
 ;--------------------------------------------
-            STA     TSC
-            RTS
+        STA     TSC
+        RTS
 
 
-;----------------Reset------------------
+;--------------------------------------------
+inter   EOR    #%10000000
+        BSR     MPLEX
+        INC     TIEMPO
+        CMP     #!200
+        BNE     SALTO3
+        CLR     TIEMPO
+;        LDA     CONTEO+1
+;        STA     CUENTA+1
+;        CLR     CONTEO+1
+;        LDA     CONTEO
+;        STA     CUENTA
+;        CLR     CONTEO
+        BSR     BIN2BCD
+        BSR     BCD27
+SALTO3  RTI
+;--------------------------------------------
+
+MPLEX   LDA     PUERTA
+        AND     #$F8
+        STA     PUERTA
+        BRSET   3,DSEL,SALTO4
+        CLR     DSEL
+SALTO4  BRSET   2,DSEL,SALTO5
+        LDA     CENTENA
+        BSR     SUB21
+SALTO5  BRSET   1,DSEL,SALTO6
+        LDA     DECENA
+        BSR     SUB21
+SALTO6  BRSET   0,DSEL,SALTO7
+        LDA     UNIDAD
+        BSR     SUB21
+SALTO7  LDA     DSEL
+        LSLA
+        STA     DSEL
+        RTI
+
+BCD27   LDA     RESULT+2
+        AND	#$0F
+        TAX
+        LDA	TABLA,X
+        STA	CENTENA
+        LDA	RESULT+3
+        AND	#$0F
+        TAX
+        LDA	TABLA,X
+        STA	UNIDAD
+        LDA	RESULT+3
+        NSA
+        AND	#$0F
+        TAX
+        LDA	TABLA,X
+        STA	DECENA
+        RTS
+
+
+;----------------------------------------
+SUB21   STA     PUERTB
+        LDA     PUERTA
+        EOR    DSEL
+        STA     PUERTA
+        RTS
+		
+;------------------------------------------------
+;SUBRUTINA BCD_CONV
+;Convierte un dato binario de 24 bits en BCD
+
+
+BIN2BCD    LDA		#$00   ;carga valor binario A:H:X = $FFFFFF = 16 77 72 15
+	   LDHX		CONTEO
+           CLR          CONTEO
+           CLR          CONTEO+1
+	   STA		VAL            ; inicializa variable VAL:VAL1:VAL2
+	   STHX		VAL+1
+	   BSR    	BCD_CONV    ;ejecuta subrutina de conversion
+           RTS
+
+
+
+BCD_CONV:LDX    #!24            ; Bit count
+         CLR    RESULT+3
+         CLR    RESULT+2
+         CLR    RESULT+1
+         CLR    RESULT
+BC1:     LDA    RESULT+3
+         JSR    BCD_ADJ        ; Adjust for BCD conversion
+         STA    RESULT+3
+         LDA    RESULT+2
+         JSR    BCD_ADJ        ; Adjust for BCD conversion
+         STA    RESULT+2
+         LDA    RESULT+1
+         JSR    BCD_ADJ        ; Adjust for BCD conversion
+         STA    RESULT+1
+         LDA    RESULT
+         JSR    BCD_ADJ        ; Adjust for BCD conversion
+         STA    RESULT
+         LSL    VAL+2
+         ROL    VAL+1
+         ROL    VAL
+         ROL    RESULT+3
+         ROL    RESULT+2
+         ROL    RESULT+1
+         ROL    RESULT
+         DBNZX  BC1            ; Loop for next bit
+         RTS
+
+BCD_ADJ: TSTA
+         BEQ    BA1            ; Exit if zero
+         PSHA
+
+         ; Process lower nybble
+         AND    #$0F
+         CMP    #5
+         BLO    *+4            ; Skip next if <5
+         ADD    #3
+         PSHA
+
+         ; Process upper nybble
+         LDA    2,SP           ; Initial byte value
+         NSA
+         AND    #$0F
+         CMP    #5
+         BLO    *+4            ; Skip next if <5
+         ADD    #3
+         NSA
+         ORA    1,SP           ; Combine nybbles
+         AIS    #2             ; Adjust stack pointer
+BA1:     RTS
+
+;----------------Reset------------------------
         ORG     VRST
         FDB     inicio
-;--------INTERRUPCION DEL TIMER---------
+;--------INTERRUPCION DEL TIMER--------------
         ORG     VTMR
         FDB     inter
