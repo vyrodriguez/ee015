@@ -9,6 +9,7 @@ PUERTA  EQU     $0000       ;HABILITACION DE LOS DISPLAY Y FREC DE ENTRADA
 ;--------------------------------------------
 ;|PA7|PA6|PA5|PA4|PA3|PA2|PA1|PA0|
 ;--------------------------------------------
+;|0|0|0|1|0|1|1|1|
 ;PA0 HABILITACION DE UNIDAD
 ;PA1 HABILITACION DE DECENA
 ;PA2 HABILIRACION DE CENTENA
@@ -49,13 +50,9 @@ TMOD    EQU     $0023       ;MODULO ALTO DEL CONTADOR
 
 ;----------------VARIABLES---------------
         ORG     RAM
-BIN	RMB	1
-BCDH	RMB	1		   ;Parte alta del BCD
-BCDL	RMB	1		   ;Parte baja del BCD
 CENTENA	RMB	1		   
 DECENA	RMB	1
 UNIDAD	RMB	1
-CUENTA  RMB     2
 CONTEO  RMB     2
 ANT     RMB     1           ; DEFINE EL ESTADO ANTERIOR 
 DSEL    RMB     1           ;DISPLAY QUE COMIENZA PRENDIDO(PRENDETE UNO)
@@ -69,35 +66,38 @@ RESULT1	    DS 1
 RESULT2     DS 1
 RESULT3	    DS 1
 
-				 		  ;7 segmentos;abcdefgh  
-TABLA   FCB     $FC		   ;NÃºmero 0 %11111100
-		FCB		$60		   ;NÃºmero 1 %01100000
-		FCB		$DA		   ;NÃºmero 2 %11011010
-		FCB		$F2		   ;NÃºmero 3 %11110010
-		FCB		$66		   ;NÃºmero 4 %01100110   ;FCB (FORM CONSTANT BYTE)
-		FCB		$B6		   ;NÃºmero 5 %10110110
-		FCB		$BE		   ;NÃºmero 6 %10111110
-		FCB		$E0		   ;NÃºmero 7 %11100000
-		FCB		$FE		   ;NÃºmero 8 %11111110
-		FCB		$E6		   ;NÃºmero 9 %11110110
 
 ;-----------------PROCESO----------------
         ORG     ROM
+TABLA   FCB     $FC		   ;Número 0 %11111100
+        FCB		$60		   ;Número 1 %01100000
+        FCB		$DA		   ;Número 2 %11011010
+        FCB		$F2		   ;Número 3 %11110010
+        FCB		$66		   ;Número 4 %01100110   ;FCB (FORM CONSTANT BYTE)
+        FCB		$B6		   ;Número 5 %10110110
+        FCB		$BE		   ;Número 6 %10111110
+        FCB		$E0		   ;Número 7 %11100000
+        FCB		$FE		   ;Número 8 %11111110
+        FCB		$E6		   ;Número 9 %11110110
 inicio  RSP                 ;RESETEAR PUNTERO DE PILA
         BSET    0,CONF1     ;DESHABILITAR COP
         CLI                 ;HABILITA INTERRUPCIONES AL CPU(bit I=0 EN EL CCR)    
         BSR     INIP   ;SUBRUTINA INICIALIZAR PUERTO
         BSR     INIT    ;SUBRUTINA INICIALIZAR TIMER
-        CLR     ANT         
-        CLR     CONTEO
-        CLR     CUENTA
-        CLR     BIN
-        CLR     UNIDAD
-        CLR     DECENA
         CLR     CENTENA
-        CLR     BCDH
-        CLR     BCDL
+        CLR     DECENA
+        CLR     UNIDAD
+        CLR     CONTEO
+        CLR     CONTEO+1
+        LDA     #$03
+        STA     CONTEO
+        LDA     #%01011001
+        STA     CONTEO+1
+        CLR     ANT         
+        CLR     DSEL
+        INC     DSEL
         CLR     TIEMPO
+        CLRA
 LAZO    CLC                 ;LIMPIA FLAG DE CARRY
         CLR     CARRY       ;LIMPIA VARIABLE DE CARRY 
         LDA     PUERTA      ;LEO PUERTO A
@@ -122,7 +122,7 @@ SALTO2  LDA     PUERTA      ;CARGO ESTADO DE PUERTO A
 
 
 ;--------------------------------------------
-INIP    LDA     #$10 	;
+INIP    LDA     #$17 	;
         STA     DDRA    ;
         LDA     #$FF
         STA     DDRB 
@@ -148,18 +148,15 @@ INIT    LDHX    #$1800  ;MODULO DEL CONTADOR
 
 
 ;--------------------------------------------
-inter   EOR    #%10000000
+inter   LDA     TSC
+        EOR    #%10000000
+        STA     TSC
         BSR     MPLEX
         INC     TIEMPO
-        CMP     #!200
+		LDA		TIEMPO
+        CMP     #!5
         BNE     SALTO3
         CLR     TIEMPO
-;        LDA     CONTEO+1
-;        STA     CUENTA+1
-;        CLR     CONTEO+1
-;        LDA     CONTEO
-;        STA     CUENTA
-;        CLR     CONTEO
         BSR     BIN2BCD
         BSR     BCD27
 SALTO3  RTI
@@ -168,26 +165,27 @@ SALTO3  RTI
 MPLEX   LDA     PUERTA
         AND     #$F8
         STA     PUERTA
-        BRSET   3,DSEL,SALTO4
+        BRCLR   3,DSEL,SALTO4
         CLR     DSEL
-SALTO4  BRSET   2,DSEL,SALTO5
+SALTO4  BRCLR   2,DSEL,SALTO5
         LDA     CENTENA
         BSR     SUB21
-SALTO5  BRSET   1,DSEL,SALTO6
+SALTO5  BRCLR   1,DSEL,SALTO6
         LDA     DECENA
         BSR     SUB21
-SALTO6  BRSET   0,DSEL,SALTO7
+SALTO6  BRCLR   0,DSEL,SALTO7
         LDA     UNIDAD
         BSR     SUB21
 SALTO7  LDA     DSEL
         LSLA
         STA     DSEL
-        RTI
+        RTS
 
 BCD27   LDA     RESULT+2
         AND	#$0F
         TAX
-        LDA	TABLA,X
+        CLRH
+		LDA	TABLA,X
         STA	CENTENA
         LDA	RESULT+3
         AND	#$0F
@@ -206,7 +204,7 @@ BCD27   LDA     RESULT+2
 ;----------------------------------------
 SUB21   STA     PUERTB
         LDA     PUERTA
-        EOR    DSEL
+        EOR     DSEL
         STA     PUERTA
         RTS
 		
