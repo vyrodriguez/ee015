@@ -69,16 +69,16 @@ RESULT3	    DS 1
 
 ;-----------------PROCESO----------------
         ORG     ROM
-TABLA   FCB     $FC		   ;Número 0 %11111100
-        FCB		$60		   ;Número 1 %01100000
-        FCB		$DA		   ;Número 2 %11011010
-        FCB		$F2		   ;Número 3 %11110010
-        FCB		$66		   ;Número 4 %01100110   ;FCB (FORM CONSTANT BYTE)
-        FCB		$B6		   ;Número 5 %10110110
-        FCB		$BE		   ;Número 6 %10111110
-        FCB		$E0		   ;Número 7 %11100000
-        FCB		$FE		   ;Número 8 %11111110
-        FCB		$E6		   ;Número 9 %11110110
+TABLA   FCB     $FC		   ;Nï¿½mero 0 %11111100
+        FCB		$60		   ;Nï¿½mero 1 %01100000
+        FCB		$DA		   ;Nï¿½mero 2 %11011010
+        FCB		$F2		   ;Nï¿½mero 3 %11110010
+        FCB		$66		   ;Nï¿½mero 4 %01100110   ;FCB (FORM CONSTANT BYTE)
+        FCB		$B6		   ;Nï¿½mero 5 %10110110
+        FCB		$BE		   ;Nï¿½mero 6 %10111110
+        FCB		$E0		   ;Nï¿½mero 7 %11100000
+        FCB		$FE		   ;Nï¿½mero 8 %11111110
+        FCB		$E6		   ;Nï¿½mero 9 %11110110
 inicio  RSP                 ;RESETEAR PUNTERO DE PILA
         BSET    0,CONF1     ;DESHABILITAR COP
         CLI                 ;HABILITA INTERRUPCIONES AL CPU(bit I=0 EN EL CCR)    
@@ -89,36 +89,27 @@ inicio  RSP                 ;RESETEAR PUNTERO DE PILA
         CLR     UNIDAD
         CLR     CONTEO
         CLR     CONTEO+1
-        LDA     #$03
-        STA     CONTEO
-        LDA     #%01011001
-        STA     CONTEO+1
         CLR     ANT         
         CLR     DSEL
         INC     DSEL
         CLR     TIEMPO
         CLRA
-LAZO    CLC                 ;LIMPIA FLAG DE CARRY
-        CLR     CARRY       ;LIMPIA VARIABLE DE CARRY 
-        LDA     PUERTA      ;LEO PUERTO A
+LAZO    LDA     PUERTA      ;LEO PUERTO A
         AND     #$08        ;APLICO MASCARA PARA LEER LA FRECUENCIA
         STA     ANT         ;ESTADO ANTERIOR DE LA SEÃ‘AL
         CMP     #$08        
         BNE     LAZO
-        LDA     CARRY
-        CMP     #$01
-        BNE     SALTO1
-        INC     CONTEO      ;INCREMENTA PARTE ALTA DE CONTEO 
-        CLR     CONTEO+1    ;LIMPIA PARTE BAJA DE CONTEO
-SALTO1  INC     CONTEO+1    ;iNCREMENTA PARTE BAJA DE CONTEO 
-        CLR     CARRY       ;LIMPIA VARIABLE CARRY
-        ROL     CARRY       ;EMPUJA FLAG DE CARRY A VARIABLE CARRY
+        LDA	CONTEO+1
+        ADD	#$01
+        STA	CONTEO+1
+        BCC	SALTO2
+        INC	CONTEO
 SALTO2  LDA     PUERTA      ;CARGO ESTADO DE PUERTO A
         AND     #$08        ;APLICO MASCARA
         STA     ANT         ;GUARDO ESTADO ANTERIOR
         CMP     #$08        
-        BNE     SALTO2
-        BRA     LAZO
+        BNE     LAZO
+        BRA     SALTO2
 
 
 ;--------------------------------------------
@@ -154,7 +145,7 @@ inter   LDA     TSC
         BSR     MPLEX
         INC     TIEMPO
 		LDA		TIEMPO
-        CMP     #!5
+        CMP     #!200
         BNE     SALTO3
         CLR     TIEMPO
         BSR     BIN2BCD
@@ -167,6 +158,8 @@ MPLEX   LDA     PUERTA
         STA     PUERTA
         BRCLR   3,DSEL,SALTO4
         CLR     DSEL
+        INC     DSEL
+        RTS
 SALTO4  BRCLR   2,DSEL,SALTO5
         LDA     CENTENA
         BSR     SUB21
